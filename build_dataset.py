@@ -29,7 +29,6 @@ def get_data_3_types(sample_size_per=50):
     data_pulsators = pulsators[["KIC"]].rename(columns={"KIC": "kic_id"})
     data_pulsators["label"] = 2
     
-    
     full_data = pd.concat([data_eclipse_binary, data_quiets, data_pulsators], ignore_index=True)
     #set random_state= if you want reproducable results
     return full_data.sample(frac=1.0).reset_index(drop=True)

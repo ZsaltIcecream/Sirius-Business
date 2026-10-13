@@ -13,7 +13,7 @@ def process_star(row, bin_count=1000):
     
     try:
         pass
-        searched_star = lk.search_lightcurve(kic_id, mission="Kepler", author="Kepler")
+        searched_star = lk.search_lightcurve(f"KIC {kic_id}", mission="Kepler", author="Kepler")
         if len(searched_star) == 0:
             return None
         
@@ -40,3 +40,32 @@ def process_star(row, bin_count=1000):
         return (flux, label, kic_id)
     except Exception:
         return None
+    
+def process_stars_into_npy(csv_path="data/ids_with_label.csv", max_threads=6):
+    stars = pd.read_csv(csv_path)
+    print(f"{len(stars)} stars from file {csv_path}")
+    
+    x_list, y_list = [], []
+    completed = 0
+    
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
+        rows = [row for _, row in stars.iterrows()]
+        results = list(executor.map(process_star, rows))
+    
+    for result in results:
+        if result is not None:
+            flux, label, kic_id = result
+            x_list.append(flux)
+            y_list.append(label)
+            completed += 1
+            print(f"Processed star- KIC: {kic_id}, label: {label}")
+            
+    x = np.expand_dims(np.array(x_list), axis=1)
+    y = np.array(y_list)
+    np.save("data/X_lightcurves.npy", x)
+    np.save("data/y_labels.npy", y)
+    
+    print(f"processing complete, loaded {completed} / {len(stars)} stars properly")
+    print(f"saved data/X_lightcurves.npy {x.shape}, data/y_labels.npy {y.shape}")
+
+process_stars_into_npy()
